@@ -66,11 +66,12 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
     let failWithCandidateNotFound candidateId =
         raise (CandidateNotFoundException(candidateId, "Candidate not found in register."))
 
-    member me.Create =
+    member me.Create name =
         let registerId = RegisterId(Guid.NewGuid())
         let repository = registerRepo.Create registerId
         let assessmentId = AssessmentId(Guid.NewGuid())
-        assessmentRepo.Create assessmentId registerId |> ignore
+        let assessment = assessmentRepo.Create assessmentId registerId
+        assessment.SetName name |> ignore
         assessmentId
 
     member me.Get assessmentId =
@@ -90,6 +91,11 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             |> List.sortBy (fun candidate -> candidate.Name)
             |> List.map (fun candidate -> candidate.Identity)
         assessment.SetRegisterSource (Shared(registerIdentity)) candidates
+
+    member me.SetName assessmentId name =
+        let identity = AssessmentId(assessmentId)
+        let assessment = assessmentRepo.Open(identity)
+        assessment.SetName name |> ignore
 
     member me.AddCandidate (assessmentId, candidateId) =
         let identity = AssessmentId(assessmentId)

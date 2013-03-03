@@ -6,6 +6,7 @@ open Registers.Core
 type AssessmentCommand =
 | Get
 | SetRegisterSource of RegisterSource * List<CandidateId>
+| SetName of string
 | AddCandidate of CandidateId
 | RemoveCandidate of CandidateId
 | SetCandidateMark of CandidateId * Mark
@@ -14,6 +15,7 @@ type AssessmentCommand =
 type AssessmentAggregateRoot (commandHandler) =
     member me.State = Get |> commandHandler
     member me.SetRegisterSource source candidates = commandHandler <| SetRegisterSource(source, candidates)
+    member me.SetName name = commandHandler <| SetName(name)
     member me.AddCandidate candidateId = commandHandler <| AddCandidate(candidateId)
     member me.RemoveCandidate candidateId = commandHandler <| RemoveCandidate(candidateId)
     member me.SetCandidateMark candidateId mark = commandHandler <| SetCandidateMark(candidateId, mark)

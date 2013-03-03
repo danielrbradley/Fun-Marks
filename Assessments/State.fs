@@ -18,40 +18,45 @@ module CandidateState =
 
 open CandidateState
 
-type AssessmentState (identity, privateRegisterId, registerSource, candidates) =
+type AssessmentState (identity, privateRegisterId, registerSource, name, candidates) =
     member me.Identity : AssessmentId = identity
     member me.RegisterSource : RegisterSource = registerSource
     member me.PrivateRegisterId : RegisterId = privateRegisterId
+    member me.Name : string = name
     member me.Candidates : List<CandidateState> = candidates
     member me.RegisterIdentity =
         match me.RegisterSource with
         | Private -> me.PrivateRegisterId
         | Shared(registerId) -> registerId
 
-    new(identity, privateRegisterId) =
+    new(identity, privateRegisterId, name) =
         AssessmentState(
             identity,
-            privateRegisterId, 
+            privateRegisterId,
             Private,
+            name,
             List.empty)
 
-let Create identity privateRegisterId =
-    new AssessmentState(identity, privateRegisterId)
+let Create identity privateRegisterId name =
+    new AssessmentState(identity, privateRegisterId, name)
 
-let Restore identity privateRegisterId registerSource candidates =
-    new AssessmentState(identity, privateRegisterId, registerSource, candidates)
+let Restore identity privateRegisterId registerSource name candidates =
+    new AssessmentState(identity, privateRegisterId, registerSource, name, candidates)
 
 let setRegisterSource source candidates (assessment:AssessmentState) =
     let candidateStates =
         candidates
         |> List.map (fun candidateId -> CandidateState.Default candidateId)
-    AssessmentState(assessment.Identity, assessment.PrivateRegisterId, source, candidateStates)
+    AssessmentState(assessment.Identity, assessment.PrivateRegisterId, source, assessment.Name, candidateStates)
+
+let setName name (assessment:AssessmentState) =
+    AssessmentState(assessment.Identity, assessment.PrivateRegisterId, assessment.RegisterSource, name, assessment.Candidates)
 
 exception CandidateNotFoundException of string
 exception DuplicateCandidateException of string
 
 let private withCandidates candidates (assessment:AssessmentState) =
-    AssessmentState(assessment.Identity, assessment.PrivateRegisterId, assessment.RegisterSource, candidates)
+    AssessmentState(assessment.Identity, assessment.PrivateRegisterId, assessment.RegisterSource, assessment.Name, candidates)
 
 let private assertCandidateExists candidateId (assessment:AssessmentState) =
     if not(assessment.Candidates |> List.exists (fun c -> c.Identity = candidateId)) 
