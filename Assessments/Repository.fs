@@ -38,6 +38,7 @@ type AssessmentRepository (commandHandlerFactory) =
         let commandHandler = commandHandlerFactory identity registerId
         let assessment = new AssessmentAggregateRoot(commandHandler)
         if not(commandHandlers.TryAdd(identity, commandHandler)) then failWithAlreadyCreated identity "Assessment already created"
+        assessment
 
     member me.Open identity =
         let found, commandHandler = commandHandlers.TryGetValue(identity)

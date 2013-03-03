@@ -30,10 +30,11 @@ let private failWithNotFound identity message =
 
 type RegisterRepository (commandHandlerFactory) =
     let commandHandlers = new System.Collections.Concurrent.ConcurrentDictionary<RegisterId, RegisterCommand -> RegisterState>()
-    member me.Create (identity) registerSource =
+    member me.Create identity =
         let commandHandler = commandHandlerFactory identity
         let assessment = new RegisterAggregateRoot(commandHandler)
         if not(commandHandlers.TryAdd(identity, commandHandler)) then failWithAlreadyCreated identity "Assessment already created"
+        assessment
 
     member me.Open identity =
         let found, commandHandler = commandHandlers.TryGetValue(identity)

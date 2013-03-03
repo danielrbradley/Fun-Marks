@@ -68,9 +68,9 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
 
     member me.Create =
         let registerId = RegisterId(Guid.NewGuid())
-        let repository = registerRepo.Create(registerId)
+        let repository = registerRepo.Create registerId
         let assessmentId = AssessmentId(Guid.NewGuid())
-        assessmentRepo.Create assessmentId registerId
+        assessmentRepo.Create assessmentId registerId |> ignore
         assessmentId
 
     member me.Get assessmentId =
