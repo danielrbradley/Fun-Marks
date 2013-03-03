@@ -51,12 +51,11 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
           Registration = convertFromRegistration assessmentCandidate.Registration;
           Mark = convertFromMark assessmentCandidate.Mark }
 
-    let constructCandidates (assessmentCandidates:List<Assessments.State.CandidateState.CandidateState>) (registerCandidates:List<Registers.State.Candidate>) =
+    let constructCandidates (assessmentCandidates:List<Assessments.State.CandidateState.CandidateState>) (registerCandidates:Map<CandidateId,Registers.State.Candidate>) =
         assessmentCandidates
         |> List.map (fun assessmentCandidate ->
                         let registerCandidate =
-                            registerCandidates
-                            |> List.find (fun registerCandidate -> registerCandidate.Identity = assessmentCandidate.Identity)
+                            registerCandidates.Item assessmentCandidate.Identity
                         constructCandidate assessmentCandidate registerCandidate)
 
     let constructAssessment (assessment:Assessments.State.AssessmentState) (register:Registers.State.RegisterState) =
@@ -86,6 +85,8 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
         let register = registerRepo.Open(registerIdentity)
         let candidates = 
             register.State.Candidates
+            |> Map.toList
+            |> List.map snd
             |> List.sortBy (fun candidate -> candidate.Name)
             |> List.map (fun candidate -> candidate.Identity)
         assessment.SetRegisterSource (Shared(registerIdentity)) candidates
