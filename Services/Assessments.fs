@@ -1,13 +1,72 @@
-﻿namespace Services
+﻿namespace Services.Assessments
 
 open System
 
 open Assessments.Core
 open Assessments.Repository
+open Registers
 open Registers.Core
 open Registers.Repository
 
+exception CandidateNotFoundException of Guid * string
+
+type Registration =
+| NotSet = 0
+| Present = 1
+| Absent = 2
+| Withdrawn = 3
+
+type Candidate = {
+        Identity : Guid;
+        Name : string;
+        Registration : Registration
+        Mark : Nullable<decimal>;
+    }
+
+type Assessment = {
+        Identity : Guid;
+        Candidates : List<Candidate>
+    }
+
 type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepository) =
+    let convertFromRegistration (registration:Option<Assessments.Core.Registration>) =
+        match registration with
+        | Some(value) ->
+            match value with
+            | Present -> Registration.Present
+            | Absent -> Registration.Present
+            | Withdrawn -> Registration.Withdrawn
+        | None -> Registration.NotSet
+
+    let convertFromMark (markOption:Option<Assessments.Core.Mark>) =
+        match markOption with
+        | Some(mark) ->
+            match mark with
+            | Mark(value) -> new Nullable<decimal>(value)
+        | None -> Nullable<decimal>()
+
+    let constructCandidate (assessmentCandidate:Assessments.State.CandidateState.CandidateState) (registerCandidate:Registers.State.Candidate) =
+        { Identity = match assessmentCandidate.Identity with CandidateId(guid) -> guid;
+          Name = registerCandidate.Name;
+          Registration = convertFromRegistration assessmentCandidate.Registration;
+          Mark = convertFromMark assessmentCandidate.Mark }
+
+    let constructCandidates (assessmentCandidates:List<Assessments.State.CandidateState.CandidateState>) (registerCandidates:List<Registers.State.Candidate>) =
+        assessmentCandidates
+        |> List.map (fun assessmentCandidate ->
+                        let registerCandidate =
+                            registerCandidates
+                            |> List.find (fun registerCandidate -> registerCandidate.Identity = assessmentCandidate.Identity)
+                        constructCandidate assessmentCandidate registerCandidate)
+
+    let constructAssessment (assessment:Assessments.State.AssessmentState) (register:Registers.State.RegisterState) =
+        if not (assessment.RegisterIdentity = register.Identity) then failwith "Incorrect register loaded for assessment"
+        else { Identity = match assessment.Identity with AssessmentId(id) -> id
+               Candidates = constructCandidates assessment.Candidates register.Candidates }
+
+    let failWithCandidateNotFound candidateId =
+        raise (CandidateNotFoundException(candidateId, "Candidate not found in register."))
+
     member me.Create =
         let registerId = RegisterId(Guid.NewGuid())
         let repository = registerRepo.Create(registerId)
@@ -17,23 +76,37 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
 
     member me.Get assessmentId =
         let identity = AssessmentId(assessmentId)
-        assessmentRepo.Open(identity).State
+        let assessment = assessmentRepo.Open(identity)
+        constructAssessment assessment.State
 
     member me.SetSharedRegisterSource assessmentId registerId =
         let identity = AssessmentId(assessmentId)
-        let assessmentAR = assessmentRepo.Open(identity)
+        let assessment = assessmentRepo.Open(identity)
         let registerIdentity = RegisterId(registerId)
         let register = registerRepo.Open(registerIdentity)
         let candidates = 
             register.State.Candidates
             |> List.sortBy (fun candidate -> candidate.Name)
             |> List.map (fun candidate -> candidate.Identity)
-        assessmentAR.SetRegisterSource (Shared(registerIdentity)) candidates
+        assessment.SetRegisterSource (Shared(registerIdentity)) candidates
 
-    member me.AddCandidate assessmentId candidateId =
+    member me.AddCandidate (assessmentId, candidateId) =
         let identity = AssessmentId(assessmentId)
         let candidateIdentity = CandidateId(candidateId)
-        assessmentRepo.Open(identity).AddCandidate candidateIdentity
+        let assessment = assessmentRepo.Open(identity)
+        let register = registerRepo.Open(assessment.State.RegisterIdentity)
+        let hasCandidate = register.State |> State.hasCandidate candidateIdentity
+        if not hasCandidate then failWithCandidateNotFound candidateId
+        assessment.AddCandidate candidateIdentity
+
+    member me.AddCandidate (assessmentId, name) =
+        let identity = AssessmentId(assessmentId)
+        let assessment = assessmentRepo.Open(identity)
+        let register = registerRepo.Open(assessment.State.RegisterIdentity)
+        let candidateId = Guid.NewGuid()
+        let candidateIdentity = CandidateId(candidateId)
+        register.AddCandidate candidateIdentity name |> ignore
+        candidateId
 
     member me.RemoveCandidate assessmentId candidateId =
         let identity = AssessmentId(assessmentId)

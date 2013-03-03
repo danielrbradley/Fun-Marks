@@ -49,3 +49,6 @@ let removeCandidate candidateId (register:RegisterState) =
 let updateName candidateId name (register:RegisterState) =
     register |> assertCandidateExists candidateId
     register |> updateCandidate candidateId (fun c -> { c with Name = name })
+
+let hasCandidate candidateId (register:RegisterState) =
+    register.Candidates |> List.exists (fun candidate -> candidate.Identity = candidateId)

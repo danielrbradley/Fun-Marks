@@ -23,6 +23,10 @@ type AssessmentState (identity, privateRegisterId, registerSource, candidates) =
     member me.RegisterSource : RegisterSource = registerSource
     member me.PrivateRegisterId : RegisterId = privateRegisterId
     member me.Candidates : List<CandidateState> = candidates
+    member me.RegisterIdentity =
+        match me.RegisterSource with
+        | Private -> me.PrivateRegisterId
+        | Shared(registerId) -> registerId
 
     new(identity, privateRegisterId) =
         AssessmentState(

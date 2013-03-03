@@ -5,13 +5,13 @@ open State
 
 type RegisterCommand =
 | Get
-| AddCandidate of CandidateId
+| AddCandidate of CandidateId * string
 | RemoveCandidate of CandidateId
 | SetCandidateName of CandidateId * string
 
 type RegisterAggregateRoot (commandHandler) =
     member me.State = Get |> commandHandler
-    member me.AddCandidate candidateId = commandHandler <| AddCandidate(candidateId)
+    member me.AddCandidate candidateId name = commandHandler <| AddCandidate(candidateId, name)
     member me.RemoveCandidate candidateId = commandHandler <| RemoveCandidate(candidateId)
     member me.SetCandidateName candidateId name = commandHandler <| SetCandidateName(candidateId, name)
 
