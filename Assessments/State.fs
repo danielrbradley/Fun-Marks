@@ -29,16 +29,16 @@ type AssessmentState (identity, privateRegisterId, registerSource, name, candida
         | Private -> me.PrivateRegisterId
         | Shared(registerId) -> registerId
 
-    new(identity, privateRegisterId, name) =
+    new(identity, privateRegisterId) =
         AssessmentState(
             identity,
             privateRegisterId,
             Private,
-            name,
+            System.String.Empty,
             List.empty)
 
-let Create identity privateRegisterId name =
-    new AssessmentState(identity, privateRegisterId, name)
+let Create identity privateRegisterId =
+    new AssessmentState(identity, privateRegisterId)
 
 let Restore identity privateRegisterId registerSource name candidates =
     new AssessmentState(identity, privateRegisterId, registerSource, name, candidates)

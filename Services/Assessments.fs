@@ -38,12 +38,25 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             | Withdrawn -> Registration.Withdrawn
         | None -> Registration.NotSet
 
+    let convertToRegistration (registration:Registration) =
+        match registration with
+        | Registration.NotSet -> None
+        | Registration.Present -> Some(Present)
+        | Registration.Absent -> Some(Absent)
+        | Registration.Withdrawn -> Some(Withdrawn)
+        | _ -> failwith "Invalid registration"
+
     let convertFromMark (markOption:Option<Assessments.Core.Mark>) =
         match markOption with
         | Some(mark) ->
             match mark with
             | Mark(value) -> new Nullable<decimal>(value)
         | None -> Nullable<decimal>()
+
+    let convertToMark (mark:Nullable<decimal>) =
+        match mark.HasValue with
+        | true -> Some(Mark(mark.Value))
+        | false -> None
 
     let constructCandidate (assessmentCandidate:Assessments.State.CandidateState.CandidateState) (registerCandidate:Registers.State.Candidate) =
         { Identity = match assessmentCandidate.Identity with CandidateId(guid) -> guid;
@@ -104,7 +117,7 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
         let register = registerRepo.Open(assessment.State.RegisterIdentity)
         let hasCandidate = register.State |> State.hasCandidate candidateIdentity
         if not hasCandidate then failWithCandidateNotFound candidateId
-        assessment.AddCandidate candidateIdentity
+        assessment.AddCandidate candidateIdentity |> ignore
 
     member me.AddCandidate (assessmentId, name) =
         let identity = AssessmentId(assessmentId)
@@ -118,14 +131,16 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
     member me.RemoveCandidate assessmentId candidateId =
         let identity = AssessmentId(assessmentId)
         let candidateIdentity = CandidateId(candidateId)
-        assessmentRepo.Open(identity).RemoveCandidate candidateIdentity
+        assessmentRepo.Open(identity).RemoveCandidate candidateIdentity |> ignore
 
     member me.SetCandidateMark assessmentId candidateId mark =
         let identity = AssessmentId(assessmentId)
         let candidateIdentity = CandidateId(candidateId)
-        assessmentRepo.Open(identity).SetCandidateMark candidateIdentity mark
+        let parsedMark = mark |> convertToMark
+        assessmentRepo.Open(identity).SetCandidateMark candidateIdentity parsedMark |> ignore
 
     member me.SetCandidateRegistration assessmentId candidateId registration =
         let identity = AssessmentId(assessmentId)
         let candidateIdentity = CandidateId(candidateId)
-        assessmentRepo.Open(identity).SetCandidateRegistration candidateIdentity registration
+        let parsedRegistration = registration |> convertToRegistration
+        assessmentRepo.Open(identity).SetCandidateRegistration candidateIdentity parsedRegistration |> ignore

@@ -9,8 +9,8 @@ type AssessmentCommand =
 | SetName of string
 | AddCandidate of CandidateId
 | RemoveCandidate of CandidateId
-| SetCandidateMark of CandidateId * Mark
-| SetCandidateRegistration of CandidateId * Registration
+| SetCandidateMark of CandidateId * Option<Mark>
+| SetCandidateRegistration of CandidateId * Option<Registration>
 
 type AssessmentAggregateRoot (commandHandler) =
     member me.State = Get |> commandHandler
