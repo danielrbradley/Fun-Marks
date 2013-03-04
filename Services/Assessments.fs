@@ -24,7 +24,8 @@ type Candidate = {
 
 type Assessment = {
         Identity : Guid;
-        Candidates : List<Candidate>
+        Name : string;
+        Candidates : Candidate seq
     }
 
 type IAssessments =
@@ -80,7 +81,8 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
 
     let constructAssessment (assessment:Assessments.State.AssessmentState) (register:Registers.State.RegisterState) =
         if not (assessment.RegisterIdentity = register.Identity) then failwith "Incorrect register loaded for assessment"
-        else { Identity = match assessment.Identity with AssessmentId(id) -> id
+        else { Identity = match assessment.Identity with AssessmentId(id) -> id;
+               Name = assessment.Name;
                Candidates = constructCandidates assessment.Candidates register.Candidates }
 
     let failWithCandidateNotFound candidateId =
@@ -104,7 +106,7 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             let registerIdentity = RegisterId(Guid.NewGuid())
             let repository = registerRepo.Create registerIdentity
             let assessmentId = Guid.NewGuid()
-            let assessmentIdentity = AssessmentId(Guid.NewGuid())
+            let assessmentIdentity = AssessmentId(assessmentId)
             let assessment = assessmentRepo.Create assessmentIdentity registerIdentity
             assessment.SetName name
             assessmentId
@@ -136,6 +138,7 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             let candidateId = Guid.NewGuid()
             let candidateIdentity = CandidateId(candidateId)
             register.AddCandidate candidateIdentity name
+            assessment.AddCandidate candidateIdentity
             candidateId
 
         member me.RemoveCandidate assessmentId candidateId =

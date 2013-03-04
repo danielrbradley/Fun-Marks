@@ -32,9 +32,9 @@ type RegisterRepository (commandHandlerFactory) =
     let commandHandlers = new System.Collections.Concurrent.ConcurrentDictionary<RegisterId, RegisterCommand -> RegisterState>()
     member me.Create identity =
         let commandHandler = commandHandlerFactory identity
-        let assessment = new RegisterAggregateRoot(commandHandler)
+        let register = new RegisterAggregateRoot(commandHandler)
         if not(commandHandlers.TryAdd(identity, commandHandler)) then failWithAlreadyCreated identity "Assessment already created"
-        assessment
+        register
 
     member me.Open identity =
         let found, commandHandler = commandHandlers.TryGetValue(identity)
