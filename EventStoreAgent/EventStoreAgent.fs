@@ -3,23 +3,22 @@
 type Query<'Command,'Reply> =
 | Query of 'Command * AsyncReplyChannel<'Reply>
 
-let createAgent initialState createEvent apply writeEvent =
+let createAgent initialState toEvent apply writeEvent =
     MailboxProcessor.Start <| fun inbox ->
         let rec Loop state = 
             async {
-                let! query = inbox.Receive()
-                match query with
-                | Query(command, replyChannel) ->
-                    let eventOption = createEvent command
-                    match eventOption with
-                    | Some(event) ->
-                        let newState = state |> apply event
-                        writeEvent event
-                        replyChannel.Reply newState
-                        do! Loop newState
-                    | None ->
-                        replyChannel.Reply state
-                        do! Loop state
+                let! Query(command, replyChannel) = inbox.Receive()
+                match command |> toEvent with
+                | Some(event) ->
+                    // Beware of exceptions; agent behaviour is "unexpected"
+                    // See http://stackoverflow.com/questions/10881464/unifying-taskt-and-f-mailboxprocessor-exception-handling
+                    let newState = state |> apply event
+                    writeEvent event
+                    replyChannel.Reply newState
+                    do! Loop newState
+                | None ->
+                    replyChannel.Reply state
+                    do! Loop state
             }
         Loop initialState
 
