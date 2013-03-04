@@ -9,6 +9,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Registers", "Registers\Regi
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EventStoreAgent", "EventStoreAgent\EventStoreAgent.fsproj", "{8DF081AD-8CB0-4749-B97C-7836D64A4119}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteropTest", "InteropTest\InteropTest.csproj", "{8DBDD7EE-EDCA-4CD7-B5B6-2DB4520CC9F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{8DF081AD-8CB0-4749-B97C-7836D64A4119}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8DF081AD-8CB0-4749-B97C-7836D64A4119}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DF081AD-8CB0-4749-B97C-7836D64A4119}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DBDD7EE-EDCA-4CD7-B5B6-2DB4520CC9F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DBDD7EE-EDCA-4CD7-B5B6-2DB4520CC9F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DBDD7EE-EDCA-4CD7-B5B6-2DB4520CC9F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DBDD7EE-EDCA-4CD7-B5B6-2DB4520CC9F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
