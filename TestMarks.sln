@@ -7,6 +7,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Assessments", "Assessments\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Registers", "Registers\Registers.fsproj", "{2544CDA6-CD36-4718-BF55-A9554CD95B03}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EventStoreAgent", "EventStoreAgent\EventStoreAgent.fsproj", "{8DF081AD-8CB0-4749-B97C-7836D64A4119}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{2544CDA6-CD36-4718-BF55-A9554CD95B03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2544CDA6-CD36-4718-BF55-A9554CD95B03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2544CDA6-CD36-4718-BF55-A9554CD95B03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DF081AD-8CB0-4749-B97C-7836D64A4119}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DF081AD-8CB0-4749-B97C-7836D64A4119}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DF081AD-8CB0-4749-B97C-7836D64A4119}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DF081AD-8CB0-4749-B97C-7836D64A4119}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

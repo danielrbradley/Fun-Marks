@@ -13,9 +13,6 @@ type AssessmentEvent =
 | CandidateMarkSet of CandidateId * Option<Mark>
 | CandidateRegistrationSet of CandidateId * Option<Registration>
 
-type Query =
-| Query of AssessmentCommand * AsyncReplyChannel<AssessmentState>
-
 let apply event state =
     match event with
     | RegisterSourceSet(source, candidates) -> state |> setRegisterSource source candidates
@@ -39,23 +36,3 @@ let createEvent command =
     | RemoveCandidate(candidateId) -> Some(CandidateRemoved(candidateId))
     | SetCandidateMark(candidateId, mark) -> Some(CandidateMarkSet(candidateId, mark))
     | SetCandidateRegistration(candidateId, registration) -> Some(CandidateRegistrationSet(candidateId, registration))
-
-let eventStoreCommandHandler initialState writeEvent =
-    MailboxProcessor.Start <| fun inbox ->
-        let rec Loop state = 
-            async {
-                let! query = inbox.Receive()
-                match query with
-                | Query(command, replyChannel) ->
-                    let eventOption = createEvent command
-                    match eventOption with
-                    | Some(event) ->
-                        let newState = state |> apply event
-                        writeEvent event
-                        replyChannel.Reply newState
-                        do! Loop newState
-                    | None ->
-                        replyChannel.Reply state
-                        do! Loop state
-            }
-        Loop initialState
