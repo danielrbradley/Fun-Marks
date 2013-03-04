@@ -11,10 +11,7 @@ type RegisterSource =
 | Private
 | Shared of RegisterId
 
-type Registration =
-| Absent
-| Present
-| Withdrawn
-
-type Mark =
+type Result =
 | Mark of decimal
+| Absent of string
+| Withdrawn of string

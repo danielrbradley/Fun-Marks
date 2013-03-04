@@ -9,8 +9,7 @@ type AssessmentCommand =
 | SetName of string
 | AddCandidate of CandidateId
 | RemoveCandidate of CandidateId
-| SetCandidateMark of CandidateId * Option<Mark>
-| SetCandidateRegistration of CandidateId * Option<Registration>
+| SetCandidateResult of CandidateId * Option<Result>
 
 type AssessmentAggregateRoot (commandHandler) =
     member me.State = Get |> commandHandler
@@ -18,8 +17,7 @@ type AssessmentAggregateRoot (commandHandler) =
     member me.SetName name = commandHandler <| SetName(name)
     member me.AddCandidate candidateId = commandHandler <| AddCandidate(candidateId)
     member me.RemoveCandidate candidateId = commandHandler <| RemoveCandidate(candidateId)
-    member me.SetCandidateMark candidateId mark = commandHandler <| SetCandidateMark(candidateId, mark)
-    member me.SetCandidateRegistration candidateId registration = commandHandler <| SetCandidateRegistration(candidateId, registration)
+    member me.SetCandidateResult candidateId result = commandHandler <| SetCandidateResult(candidateId, result)
 
 exception AssessmentAlreadyCreatedException of System.Guid * string
 exception AssessmentNotFoundException of System.Guid * string

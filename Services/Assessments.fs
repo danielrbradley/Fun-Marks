@@ -10,17 +10,16 @@ open Registers.Repository
 
 exception CandidateNotFoundException of Guid * string
 
-type Registration =
-| NotSet = 0
-| Present = 1
-| Absent = 2
-| Withdrawn = 3
+type ResultMissingReason =
+| Absent = 0
+| Withdrawn = 1
 
 type Candidate = {
         Identity : Guid;
         Name : string;
-        Registration : Registration
         Mark : Nullable<decimal>;
+        ResultMissingReason : Nullable<ResultMissingReason>;
+        ResultMissingReasonComment : string;
     }
 
 type Assessment = {
@@ -35,44 +34,42 @@ type IAssessments =
     abstract member AddExistingCandidate : Guid -> Guid -> unit
     abstract member AddNewCandidate : Guid -> string -> Guid
     abstract member RemoveCandidate : Guid -> Guid -> unit
-    abstract member SetCandidateMark : Guid -> Guid -> Nullable<decimal> -> unit
-    abstract member SetCandidateRegistration : Guid -> Guid -> Registration -> unit
+    abstract member ClearCandidateMark : Guid -> Guid -> unit
+    abstract member SetCandidateMark : Guid -> Guid -> decimal -> unit
+    abstract member SetCandidateResultMissingReason : Guid -> Guid -> ResultMissingReason -> string -> unit
 
 type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepository) =
-    let convertFromRegistration (registration:Option<Assessments.Core.Registration>) =
-        match registration with
-        | Some(value) ->
-            match value with
-            | Present -> Registration.Present
-            | Absent -> Registration.Present
-            | Withdrawn -> Registration.Withdrawn
-        | None -> Registration.NotSet
+    let parseResultMissingReason (resultMissingReason:ResultMissingReason) (resultMissingReasonComment) =
+        match resultMissingReason with
+        | ResultMissingReason.Absent -> Absent(resultMissingReasonComment)
+        | ResultMissingReason.Withdrawn -> Withdrawn(resultMissingReasonComment)
+        | _ -> raise (System.ArgumentOutOfRangeException("resultMissingReason", "Invalid reason"))
 
-    let convertToRegistration (registration:Registration) =
-        match registration with
-        | Registration.NotSet -> None
-        | Registration.Present -> Some(Present)
-        | Registration.Absent -> Some(Absent)
-        | Registration.Withdrawn -> Some(Withdrawn)
-        | _ -> failwith "Invalid registration"
+    let convertFromResult (resultOption:Option<Assessments.Core.Result>) =
+        match resultOption with
+        | Some(result) ->
+            match result with
+            | Mark(mark) -> (new Nullable<ResultMissingReason>(), System.String.Empty, new Nullable<decimal>(mark))
+            | Absent(comment) -> (new Nullable<ResultMissingReason>(ResultMissingReason.Absent), comment, new Nullable<decimal>())
+            | Withdrawn(comment) -> (new Nullable<ResultMissingReason>(ResultMissingReason.Withdrawn), comment, new Nullable<decimal>())
+        | None -> (new Nullable<ResultMissingReason>(), System.String.Empty, new Nullable<decimal>())
 
-    let convertFromMark (markOption:Option<Assessments.Core.Mark>) =
-        match markOption with
-        | Some(mark) ->
-            match mark with
-            | Mark(value) -> new Nullable<decimal>(value)
-        | None -> Nullable<decimal>()
-
-    let convertToMark (mark:Nullable<decimal>) =
-        match mark.HasValue with
-        | true -> Some(Mark(mark.Value))
-        | false -> None
+    let convertToResult (resultMissingReason:Nullable<ResultMissingReason>) (resultMissingReasonComment) (mark:Nullable<decimal>) =
+        if mark.HasValue then Some(Mark(mark.Value))
+        elif resultMissingReason.HasValue then
+            match resultMissingReason.Value with
+            | ResultMissingReason.Absent -> Some(Absent(resultMissingReasonComment))
+            | ResultMissingReason.Withdrawn -> Some(Withdrawn(resultMissingReasonComment))
+            | _ -> failwith ""
+        else None
 
     let constructCandidate (assessmentCandidate:Assessments.State.CandidateState.CandidateState) (registerCandidate:Registers.State.Candidate) =
+        let resultMissingReason, resultMissingReasonComment, mark = convertFromResult assessmentCandidate.Result
         { Identity = match assessmentCandidate.Identity with CandidateId(guid) -> guid;
           Name = registerCandidate.Name;
-          Registration = convertFromRegistration assessmentCandidate.Registration;
-          Mark = convertFromMark assessmentCandidate.Mark }
+          Mark = mark;
+          ResultMissingReason = resultMissingReason;
+          ResultMissingReasonComment = resultMissingReasonComment; }
 
     let constructCandidates (assessmentCandidates:List<Assessments.State.CandidateState.CandidateState>) (registerCandidates:Map<CandidateId,Registers.State.Candidate>) =
         assessmentCandidates
@@ -114,9 +111,9 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
 
         member me.Get assessmentId =
             let identity = AssessmentId(assessmentId)
-            let assessment = assessmentRepo.Open(identity)
-            let register = registerRepo.Open(assessment.State.RegisterIdentity)
-            constructAssessment assessment.State register.State
+            let assessment = assessmentRepo.Open(identity).State
+            let register = registerRepo.Open(assessment.RegisterIdentity).State
+            constructAssessment assessment register
 
         member me.SetName assessmentId name =
             let identity = AssessmentId(assessmentId)
@@ -146,15 +143,19 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             let candidateIdentity = CandidateId(candidateId)
             assessmentRepo.Open(identity).RemoveCandidate candidateIdentity |> ignore
 
+        member me.ClearCandidateMark assessmentId candidateId =
+            let identity = AssessmentId(assessmentId)
+            let candidateIdentity = CandidateId(candidateId)
+            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity None |> ignore
+
         member me.SetCandidateMark assessmentId candidateId mark =
             let identity = AssessmentId(assessmentId)
             let candidateIdentity = CandidateId(candidateId)
-            let parsedMark = mark |> convertToMark
-            assessmentRepo.Open(identity).SetCandidateMark candidateIdentity parsedMark |> ignore
+            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity (Some(Mark(mark))) |> ignore
 
-        member me.SetCandidateRegistration assessmentId candidateId registration =
+        member me.SetCandidateResultMissingReason assessmentId candidateId resultMissingReason comment =
             let identity = AssessmentId(assessmentId)
             let candidateIdentity = CandidateId(candidateId)
-            let parsedRegistration = registration |> convertToRegistration
-            assessmentRepo.Open(identity).SetCandidateRegistration candidateIdentity parsedRegistration |> ignore
+            let parsedResultMissingReason = parseResultMissingReason resultMissingReason comment
+            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity (Some(parsedResultMissingReason)) |> ignore
 

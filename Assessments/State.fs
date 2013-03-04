@@ -7,14 +7,12 @@ open Registers.State
 module CandidateState =
     type CandidateState = {
             Identity : CandidateId;
-            Registration : Option<Registration>;
-            Mark : Option<Mark>
+            Result : Option<Result>
         }
 
     let Default identity =
         { Identity = identity;
-          Registration = None;
-          Mark = None; }
+          Result = None; }
 
 open CandidateState
 
@@ -86,13 +84,9 @@ let removeCandidate candidateId (assessment:AssessmentState) =
         assessment.Candidates
         |> List.filter (fun c -> not(c.Identity = candidateId)))
 
-let setMark candidateId mark (assessment:AssessmentState) =
+let setMark candidateId result (assessment:AssessmentState) =
     assessment |> assertCandidateExists candidateId
-    assessment |> (updateCandidate candidateId (fun c -> { c with Mark = mark }))
-
-let setRegistration candidateId registration (assessment:AssessmentState) =
-    assessment |> assertCandidateExists candidateId
-    assessment |> (updateCandidate candidateId (fun c -> { c with Registration = registration }))
+    assessment |> (updateCandidate candidateId (fun c -> { c with Result = result }))
 
 let rec private insert v i l =
     match i, l with

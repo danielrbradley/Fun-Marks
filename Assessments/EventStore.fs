@@ -10,8 +10,7 @@ type AssessmentEvent =
 | NameSet of string
 | CandidateAdded of CandidateId
 | CandidateRemoved of CandidateId
-| CandidateMarkSet of CandidateId * Option<Mark>
-| CandidateRegistrationSet of CandidateId * Option<Registration>
+| CandidateResultSet of CandidateId * Option<Result>
 
 let apply event state =
     match event with
@@ -19,8 +18,7 @@ let apply event state =
     | NameSet(name) -> state |> setName name
     | CandidateAdded(candidateId) -> state |> addCandidate candidateId
     | CandidateRemoved(candidateId) -> state |> removeCandidate candidateId
-    | CandidateMarkSet(candidateId, mark) -> state |> setMark candidateId mark
-    | CandidateRegistrationSet(candidateId, registration) -> state |> setRegistration candidateId registration
+    | CandidateResultSet(candidateId, result) -> state |> setMark candidateId result
 
 let replay assessmentId registerId events =
     let initialState = State.Create assessmentId registerId
@@ -34,11 +32,10 @@ let createEvent command =
     | SetName(name) -> Some(NameSet(name))
     | AddCandidate(candidateId) -> Some(CandidateAdded(candidateId))
     | RemoveCandidate(candidateId) -> Some(CandidateRemoved(candidateId))
-    | SetCandidateMark(candidateId, mark) -> Some(CandidateMarkSet(candidateId, mark))
-    | SetCandidateRegistration(candidateId, registration) -> Some(CandidateRegistrationSet(candidateId, registration))
+    | SetCandidateResult(candidateId, result) -> Some(CandidateResultSet(candidateId, result))
 
 let createAssessmentCommandHandler assessmentId privateRegisterId =
     let initialState = State.Create assessmentId privateRegisterId
     let writeEvent event = ()
-    let commandHandler = new EventStoreAgent.EventStoreComandHandler<AssessmentCommand, AssessmentState>(EventStoreAgent.createAgent initialState createEvent apply writeEvent)
+    let commandHandler = new EventStoreAgent.EventStoreComandHandler<AssessmentCommand, AssessmentState>(initialState createEvent apply writeEvent)
     commandHandler.Execute
