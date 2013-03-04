@@ -158,3 +158,11 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             let candidateIdentity = CandidateId(candidateId)
             let parsedResultMissingReason = parseResultMissingReason resultMissingReason comment
             assessmentRepo.Open(identity).SetCandidateResult candidateIdentity (Some(parsedResultMissingReason))
+
+module Factory =
+    let Create =
+        let createAssessmentCommandHandler = Assessments.CommandHandler.createCommandHandler
+        let assessmentRepo = new Assessments.Repository.AssessmentRepository(createAssessmentCommandHandler)
+        let createRegisterCommandHandler = Registers.CommandHandler.createCommandHandler
+        let registerRepo = new Registers.Repository.RegisterRepository(createRegisterCommandHandler)
+        new Assessments(assessmentRepo, registerRepo)

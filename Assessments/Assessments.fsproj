@@ -44,7 +44,7 @@
     <Compile Include="Core.fs" />
     <Compile Include="State.fs" />
     <Compile Include="Repository.fs" />
-    <Compile Include="EventStore.fs" />
+    <Compile Include="CommandHandler.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EventStoreAgent\EventStoreAgent.fsproj">

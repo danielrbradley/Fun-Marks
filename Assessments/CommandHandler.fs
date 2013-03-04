@@ -1,4 +1,4 @@
-﻿module Assessments.EventStore
+﻿module Assessments.CommandHandler
 
 open Core
 open Registers.Core
@@ -34,7 +34,7 @@ let createEvent command =
     | RemoveCandidate(candidateId) -> Some(CandidateRemoved(candidateId))
     | SetCandidateResult(candidateId, result) -> Some(CandidateResultSet(candidateId, result))
 
-let createAssessmentCommandHandler assessmentId privateRegisterId =
+let createCommandHandler assessmentId privateRegisterId =
     let initialState = State.Create assessmentId privateRegisterId
     let writeEvent event = ()
     let commandHandler = EventStoreAgent.create initialState createEvent apply writeEvent

@@ -44,6 +44,14 @@
     <Compile Include="Core.fs" />
     <Compile Include="State.fs" />
     <Compile Include="Repository.fs" />
+    <Compile Include="CommandHandler.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EventStoreAgent\EventStoreAgent.fsproj">
+      <Name>EventStoreAgent</Name>
+      <Project>{8df081ad-8cb0-4749-b97c-7836d64a4119}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
