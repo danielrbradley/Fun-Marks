@@ -13,11 +13,11 @@ type AssessmentCommand =
 
 type AssessmentAggregateRoot (commandHandler) =
     member me.State = Get |> commandHandler
-    member me.SetRegisterSource source candidates = commandHandler <| SetRegisterSource(source, candidates)
-    member me.SetName name = commandHandler <| SetName(name)
-    member me.AddCandidate candidateId = commandHandler <| AddCandidate(candidateId)
-    member me.RemoveCandidate candidateId = commandHandler <| RemoveCandidate(candidateId)
-    member me.SetCandidateResult candidateId result = commandHandler <| SetCandidateResult(candidateId, result)
+    member me.SetRegisterSource source candidates = SetRegisterSource(source, candidates) |> commandHandler |> ignore
+    member me.SetName name = SetName(name) |> commandHandler |> ignore
+    member me.AddCandidate candidateId = AddCandidate(candidateId) |> commandHandler |> ignore
+    member me.RemoveCandidate candidateId = RemoveCandidate(candidateId) |> commandHandler |> ignore
+    member me.SetCandidateResult candidateId result = SetCandidateResult(candidateId, result) |> commandHandler |> ignore
 
 exception AssessmentAlreadyCreatedException of System.Guid * string
 exception AssessmentNotFoundException of System.Guid * string

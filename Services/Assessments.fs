@@ -106,7 +106,7 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             let assessmentId = Guid.NewGuid()
             let assessmentIdentity = AssessmentId(Guid.NewGuid())
             let assessment = assessmentRepo.Create assessmentIdentity registerIdentity
-            assessment.SetName name |> ignore
+            assessment.SetName name
             assessmentId
 
         member me.Get assessmentId =
@@ -118,7 +118,7 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
         member me.SetName assessmentId name =
             let identity = AssessmentId(assessmentId)
             let assessment = assessmentRepo.Open(identity)
-            assessment.SetName name |> ignore
+            assessment.SetName name
 
         member me.AddExistingCandidate assessmentId candidateId =
             let identity = AssessmentId(assessmentId)
@@ -127,7 +127,7 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             let register = registerRepo.Open(assessment.State.RegisterIdentity)
             let hasCandidate = register.State |> State.hasCandidate candidateIdentity
             if not hasCandidate then failWithCandidateNotFound candidateId
-            assessment.AddCandidate candidateIdentity |> ignore
+            assessment.AddCandidate candidateIdentity
 
         member me.AddNewCandidate assessmentId name =
             let identity = AssessmentId(assessmentId)
@@ -135,27 +135,26 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             let register = registerRepo.Open(assessment.State.RegisterIdentity)
             let candidateId = Guid.NewGuid()
             let candidateIdentity = CandidateId(candidateId)
-            register.AddCandidate candidateIdentity name |> ignore
+            register.AddCandidate candidateIdentity name
             candidateId
 
         member me.RemoveCandidate assessmentId candidateId =
             let identity = AssessmentId(assessmentId)
             let candidateIdentity = CandidateId(candidateId)
-            assessmentRepo.Open(identity).RemoveCandidate candidateIdentity |> ignore
+            assessmentRepo.Open(identity).RemoveCandidate candidateIdentity
 
         member me.ClearCandidateMark assessmentId candidateId =
             let identity = AssessmentId(assessmentId)
             let candidateIdentity = CandidateId(candidateId)
-            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity None |> ignore
+            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity None
 
         member me.SetCandidateMark assessmentId candidateId mark =
             let identity = AssessmentId(assessmentId)
             let candidateIdentity = CandidateId(candidateId)
-            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity (Some(Mark(mark))) |> ignore
+            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity (Some(Mark(mark)))
 
         member me.SetCandidateResultMissingReason assessmentId candidateId resultMissingReason comment =
             let identity = AssessmentId(assessmentId)
             let candidateIdentity = CandidateId(candidateId)
             let parsedResultMissingReason = parseResultMissingReason resultMissingReason comment
-            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity (Some(parsedResultMissingReason)) |> ignore
-
+            assessmentRepo.Open(identity).SetCandidateResult candidateIdentity (Some(parsedResultMissingReason))

@@ -11,9 +11,9 @@ type RegisterCommand =
 
 type RegisterAggregateRoot (commandHandler) =
     member me.State = Get |> commandHandler
-    member me.AddCandidate candidateId name = commandHandler <| AddCandidate(candidateId, name)
-    member me.RemoveCandidate candidateId = commandHandler <| RemoveCandidate(candidateId)
-    member me.SetCandidateName candidateId name = commandHandler <| SetCandidateName(candidateId, name)
+    member me.AddCandidate candidateId name = AddCandidate(candidateId, name) |> commandHandler |> ignore
+    member me.RemoveCandidate candidateId = RemoveCandidate(candidateId) |> commandHandler |> ignore
+    member me.SetCandidateName candidateId name = SetCandidateName(candidateId, name) |> commandHandler |> ignore
 
 exception RegisterAlreadyCreatedException of System.Guid * string
 exception RegisterNotFoundException of System.Guid * string
