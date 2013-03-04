@@ -37,5 +37,5 @@ let createEvent command =
 let createAssessmentCommandHandler assessmentId privateRegisterId =
     let initialState = State.Create assessmentId privateRegisterId
     let writeEvent event = ()
-    let commandHandler = new EventStoreAgent.EventStoreComandHandler<AssessmentCommand, AssessmentState>(initialState createEvent apply writeEvent)
+    let commandHandler = EventStoreAgent.create initialState createEvent apply writeEvent
     commandHandler.Execute

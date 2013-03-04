@@ -23,10 +23,14 @@ let createAgent initialState createEvent apply writeEvent =
             }
         Loop initialState
 
-type EventStoreComandHandler<'Command,'Reply> (eventStoreAgent:MailboxProcessor<Query<'Command, 'Reply>>) =
+type EventStoreComandHandler<'Command,'Reply,'Event> (eventStoreAgent:MailboxProcessor<Query<'Command, 'Reply>>) =
     member me.ExecuteAsync command =
         eventStoreAgent.PostAndAsyncReply (fun (replyChannel:AsyncReplyChannel<'Reply>) -> Query(command, replyChannel))
     member me.Execute command =
         eventStoreAgent.PostAndReply (fun (replyChannel:AsyncReplyChannel<'Reply>) -> Query(command, replyChannel))
     new(initialState, createEvent, apply, writeEvent) =
-        EventStoreComandHandler<'Command,'Reply>(createAgent initialState createEvent apply writeEvent)
+        EventStoreComandHandler<'Command,'Reply,'Event>(createAgent initialState createEvent apply writeEvent)
+
+let create<'Command,'Reply,'Event> initialState (createEvent:'Command -> Option<'Event>) (apply:'Event -> 'Reply -> 'Reply) writeEvent =
+    let agent = createAgent initialState createEvent apply writeEvent
+    new EventStoreComandHandler<'Command,'Reply,'Event>(agent)
