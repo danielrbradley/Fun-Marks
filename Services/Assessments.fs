@@ -28,6 +28,16 @@ type Assessment = {
         Candidates : List<Candidate>
     }
 
+type IAssessments =
+    abstract member Create : string -> Guid
+    abstract member Get : Guid -> Assessment
+    abstract member SetName : Guid -> string -> unit
+    abstract member AddExistingCandidate : Guid -> Guid -> unit
+    abstract member AddNewCandidate : Guid -> string -> Guid
+    abstract member RemoveCandidate : Guid -> Guid -> unit
+    abstract member SetCandidateMark : Guid -> Guid -> Nullable<decimal> -> unit
+    abstract member SetCandidateRegistration : Guid -> Guid -> Registration -> unit
+
 type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepository) =
     let convertFromRegistration (registration:Option<Assessments.Core.Registration>) =
         match registration with
@@ -79,19 +89,6 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
     let failWithCandidateNotFound candidateId =
         raise (CandidateNotFoundException(candidateId, "Candidate not found in register."))
 
-    member me.Create name =
-        let registerId = RegisterId(Guid.NewGuid())
-        let repository = registerRepo.Create registerId
-        let assessmentId = AssessmentId(Guid.NewGuid())
-        let assessment = assessmentRepo.Create assessmentId registerId
-        assessment.SetName name |> ignore
-        assessmentId
-
-    member me.Get assessmentId =
-        let identity = AssessmentId(assessmentId)
-        let assessment = assessmentRepo.Open(identity)
-        constructAssessment assessment.State
-
     member me.SetSharedRegisterSource assessmentId registerId =
         let identity = AssessmentId(assessmentId)
         let assessment = assessmentRepo.Open(identity)
@@ -105,42 +102,59 @@ type Assessments (assessmentRepo:AssessmentRepository, registerRepo:RegisterRepo
             |> List.map (fun candidate -> candidate.Identity)
         assessment.SetRegisterSource (Shared(registerIdentity)) candidates
 
-    member me.SetName assessmentId name =
-        let identity = AssessmentId(assessmentId)
-        let assessment = assessmentRepo.Open(identity)
-        assessment.SetName name |> ignore
+    interface IAssessments with
+        member me.Create name =
+            let registerIdentity = RegisterId(Guid.NewGuid())
+            let repository = registerRepo.Create registerIdentity
+            let assessmentId = Guid.NewGuid()
+            let assessmentIdentity = AssessmentId(Guid.NewGuid())
+            let assessment = assessmentRepo.Create assessmentIdentity registerIdentity
+            assessment.SetName name |> ignore
+            assessmentId
 
-    member me.AddCandidate (assessmentId, candidateId) =
-        let identity = AssessmentId(assessmentId)
-        let candidateIdentity = CandidateId(candidateId)
-        let assessment = assessmentRepo.Open(identity)
-        let register = registerRepo.Open(assessment.State.RegisterIdentity)
-        let hasCandidate = register.State |> State.hasCandidate candidateIdentity
-        if not hasCandidate then failWithCandidateNotFound candidateId
-        assessment.AddCandidate candidateIdentity |> ignore
+        member me.Get assessmentId =
+            let identity = AssessmentId(assessmentId)
+            let assessment = assessmentRepo.Open(identity)
+            let register = registerRepo.Open(assessment.State.RegisterIdentity)
+            constructAssessment assessment.State register.State
 
-    member me.AddCandidate (assessmentId, name) =
-        let identity = AssessmentId(assessmentId)
-        let assessment = assessmentRepo.Open(identity)
-        let register = registerRepo.Open(assessment.State.RegisterIdentity)
-        let candidateId = Guid.NewGuid()
-        let candidateIdentity = CandidateId(candidateId)
-        register.AddCandidate candidateIdentity name |> ignore
-        candidateId
+        member me.SetName assessmentId name =
+            let identity = AssessmentId(assessmentId)
+            let assessment = assessmentRepo.Open(identity)
+            assessment.SetName name |> ignore
 
-    member me.RemoveCandidate assessmentId candidateId =
-        let identity = AssessmentId(assessmentId)
-        let candidateIdentity = CandidateId(candidateId)
-        assessmentRepo.Open(identity).RemoveCandidate candidateIdentity |> ignore
+        member me.AddExistingCandidate assessmentId candidateId =
+            let identity = AssessmentId(assessmentId)
+            let candidateIdentity = CandidateId(candidateId)
+            let assessment = assessmentRepo.Open(identity)
+            let register = registerRepo.Open(assessment.State.RegisterIdentity)
+            let hasCandidate = register.State |> State.hasCandidate candidateIdentity
+            if not hasCandidate then failWithCandidateNotFound candidateId
+            assessment.AddCandidate candidateIdentity |> ignore
 
-    member me.SetCandidateMark assessmentId candidateId mark =
-        let identity = AssessmentId(assessmentId)
-        let candidateIdentity = CandidateId(candidateId)
-        let parsedMark = mark |> convertToMark
-        assessmentRepo.Open(identity).SetCandidateMark candidateIdentity parsedMark |> ignore
+        member me.AddNewCandidate assessmentId name =
+            let identity = AssessmentId(assessmentId)
+            let assessment = assessmentRepo.Open(identity)
+            let register = registerRepo.Open(assessment.State.RegisterIdentity)
+            let candidateId = Guid.NewGuid()
+            let candidateIdentity = CandidateId(candidateId)
+            register.AddCandidate candidateIdentity name |> ignore
+            candidateId
 
-    member me.SetCandidateRegistration assessmentId candidateId registration =
-        let identity = AssessmentId(assessmentId)
-        let candidateIdentity = CandidateId(candidateId)
-        let parsedRegistration = registration |> convertToRegistration
-        assessmentRepo.Open(identity).SetCandidateRegistration candidateIdentity parsedRegistration |> ignore
+        member me.RemoveCandidate assessmentId candidateId =
+            let identity = AssessmentId(assessmentId)
+            let candidateIdentity = CandidateId(candidateId)
+            assessmentRepo.Open(identity).RemoveCandidate candidateIdentity |> ignore
+
+        member me.SetCandidateMark assessmentId candidateId mark =
+            let identity = AssessmentId(assessmentId)
+            let candidateIdentity = CandidateId(candidateId)
+            let parsedMark = mark |> convertToMark
+            assessmentRepo.Open(identity).SetCandidateMark candidateIdentity parsedMark |> ignore
+
+        member me.SetCandidateRegistration assessmentId candidateId registration =
+            let identity = AssessmentId(assessmentId)
+            let candidateIdentity = CandidateId(candidateId)
+            let parsedRegistration = registration |> convertToRegistration
+            assessmentRepo.Open(identity).SetCandidateRegistration candidateIdentity parsedRegistration |> ignore
+

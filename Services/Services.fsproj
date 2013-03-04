@@ -49,6 +49,11 @@
       <Project>{727296ec-c9d8-47a0-9cba-8918fc97d169}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\EventStoreAgent\EventStoreAgent.fsproj">
+      <Name>EventStoreAgent</Name>
+      <Project>{8df081ad-8cb0-4749-b97c-7836d64a4119}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Registers\Registers.fsproj">
       <Name>Registers</Name>
       <Project>{2544cda6-cd36-4718-bf55-a9554cd95b03}</Project>

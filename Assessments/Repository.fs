@@ -34,10 +34,10 @@ let private failWithNotFound identity message =
     | AssessmentId(guid) ->
         raise (AssessmentNotFoundException (guid, message))
 
-type AssessmentRepository (commandHandlerFactory) =
+type AssessmentRepository (createAssessmentCommandHandler) =
     let commandHandlers = new System.Collections.Concurrent.ConcurrentDictionary<AssessmentId, AssessmentCommand -> State.AssessmentState>()
     member me.Create identity (registerId:RegisterId) =
-        let commandHandler = commandHandlerFactory identity registerId
+        let commandHandler = createAssessmentCommandHandler identity registerId
         let assessment = new AssessmentAggregateRoot(commandHandler)
         if not(commandHandlers.TryAdd(identity, commandHandler)) then failWithAlreadyCreated identity "Assessment already created"
         assessment

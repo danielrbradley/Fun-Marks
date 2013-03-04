@@ -36,3 +36,9 @@ let createEvent command =
     | RemoveCandidate(candidateId) -> Some(CandidateRemoved(candidateId))
     | SetCandidateMark(candidateId, mark) -> Some(CandidateMarkSet(candidateId, mark))
     | SetCandidateRegistration(candidateId, registration) -> Some(CandidateRegistrationSet(candidateId, registration))
+
+let createAssessmentCommandHandler assessmentId privateRegisterId =
+    let initialState = State.Create assessmentId privateRegisterId
+    let writeEvent event = ()
+    let commandHandler = new EventStoreAgent.EventStoreComandHandler<AssessmentCommand, AssessmentState>(EventStoreAgent.createAgent initialState createEvent apply writeEvent)
+    commandHandler.Execute
